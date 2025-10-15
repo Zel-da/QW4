@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  notices   Notice[]
+}
+
+model Notice {
+  id             String   @id @default(uuid())
+  title          String
+  content        String
+  authorId       String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+  isActive       Boolean  @default(true)
+  viewCount      Int      @default(0)
+  imageUrl       String?
+  attachmentUrl  String?
+  attachmentName String?
+  author         User     @relation(fields: [authorId], references: [id])
+
+  @@index([authorId])
+}
+
+model Course {
+  id              String           @id @default(uuid())
+  title           String
+  description     String
+  type            String
+  duration        Int
+  videoUrl        String?
+  documentUrl     String?
+  color           String           @default("blue")
+  icon            String
+  isActive        Boolean          @default(true)
+  assessments     Assessment[]
+  certificates    Certificate[]
+  userAssessments UserAssessment[]
+  userProgress    UserProgress[]
+}
+
+model UserProgress {
+  id           String   @id @default(uuid())
+  userId       String
+  courseId     String
+  progress     Int      @default(0)
+  completed    Boolean  @default(false)
+  currentStep  Int      @default(1)
+  timeSpent    Int      @default(0)
+  lastAccessed DateTime @default(now())
+  course       Course   @relation(fields: [courseId], references: [id])
+
+  @@index([userId])
+  @@index([courseId])
+}
+
+model Assessment {
+  id            String @id @default(uuid())
+  courseId      String
+  question      String
+  options       String
+  correctAnswer Int
+  difficulty    String @default("medium")
+  course        Course @relation(fields: [courseId], references: [id])
+
+  @@index([courseId])
+}
+
+model UserAssessment {
+  id             String   @id @default(uuid())
+  userId         String
+  courseId       String
+  score          Int
+  totalQuestions Int
+  passed         Boolean
+  attemptNumber  Int      @default(1)
+  completedAt    DateTime @default(now())
+  course         Course   @relation(fields: [courseId], references: [id])
+
+  @@index([userId])
+  @@index([courseId])
+}
+
+model Certificate {
+  id             String   @id @default(uuid())
+  userId         String
+  courseId       String
+  certificateUrl String
+  issuedAt       DateTime @default(now())
+  course         Course   @relation(fields: [courseId], references: [id])
+
+  @@index([userId])
+  @@index([courseId])
+}
+
+model Team {
+  id                 Int                 @id @default(autoincrement()) @map("TeamID")
+  name               String?             @map("TeamName")
+  checklistTemplates ChecklistTemplate[]
+  dailyReports       DailyReport[]
+  users              TbmUser[]
+
+  @@map("Teams")
+}
+
+model TbmUser {
+  id               Int               @id @default(autoincrement()) @map("UserID")
+  name             String?           @map("UserName")
+  teamId           Int               @map("TeamID")
+  reportSignatures ReportSignature[]
+  team             Team              @relation(fields: [teamId], references: [id])
+
+  @@index([teamId])
+  @@map("Users")
+}
+
+model ChecklistTemplate {
+  id            Int            @id @default(autoincrement()) @map("TemplateID")
+  name          String?        @map("TemplateName")
+  teamId        Int            @map("TeamID")
+  team          Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  templateItems TemplateItem[]
+
+  @@index([teamId])
+  @@map("ChecklistTemplates")
+}
+
+model TemplateItem {
+  id            Int               @id @default(autoincrement()) @map("ItemID")
+  templateId    Int               @map("TemplateID")
+  category      String?           @map("Category")
+  subCategory   String?           @map("SubCategory")
+  description   String?           @map("Description")
+  displayOrder  Int               @default(0) @map("DisplayOrder")
+  reportDetails ReportDetail[]
+  template      ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@map("TemplateItems")
+}
+
+model DailyReport {
+  id               Int               @id @default(autoincrement()) @map("ReportID")
+  teamId           Int               @map("TeamID")
+  reportDate       DateTime          @map("ReportDate")
+  managerName      String?           @map("ManagerName")
+  remarks          String?           @map("Remarks")
+  team             Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  reportDetails    ReportDetail[]
+  reportSignatures ReportSignature[]
+
+  @@index([teamId])
+  @@map("DailyReports")
+}
+
+model ReportDetail {
+  id         Int          @id @default(autoincrement()) @map("DetailID")
+  reportId   Int          @map("ReportID")
+  itemId     Int          @map("ItemID")
+  checkState String?      @map("CheckState")
+  item       TemplateItem @relation(fields: [itemId], references: [id])
+  report     DailyReport  @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@index([itemId])
+  @@map("ReportDetails")
+}
+
+model ReportSignature {
+  id             Int         @id @default(autoincrement()) @map("SignatureID")
+  reportId       Int         @map("ReportID")
+  userId         Int         @map("UserID")
+  signedAt       DateTime    @default(now()) @map("SignedAt")
+  signatureImage String?     @map("SignatureImage")
+  report         DailyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user           TbmUser     @relation(fields: [userId], references: [id])
+
+  @@index([reportId])
+  @@index([userId])
+  @@map("ReportSignatures")
+}
