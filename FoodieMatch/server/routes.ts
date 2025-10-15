@@ -575,6 +575,251 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===========================================
+  // TBM (Tool Box Meeting) API ROUTES
+  // ===========================================
+
+  // Get all teams
+  app.get("/api/tbm/teams", async (req, res) => {
+    try {
+      const teams = await prisma.team.findMany({
+        orderBy: { id: 'asc' }
+      });
+      res.json(teams);
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+      res.status(500).json({ message: "Failed to fetch teams" });
+    }
+  });
+
+  // Get users for a specific team
+  app.get("/api/tbm/teams/:id/users", async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.id);
+      const users = await prisma.tbmUser.findMany({
+        where: { teamId },
+        orderBy: { id: 'asc' }
+      });
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching team users:', error);
+      res.status(500).json({ message: "Failed to fetch team users" });
+    }
+  });
+
+  // Get checklist template for a team
+  app.get("/api/tbm/checklist/:teamId", async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      const template = await prisma.checklistTemplate.findFirst({
+        where: { teamId },
+        include: {
+          templateItems: {
+            orderBy: { displayOrder: 'asc' }
+          }
+        }
+      });
+
+      if (!template) {
+        return res.status(404).json({ message: "Checklist template not found for this team" });
+      }
+
+      res.json({
+        templateId: template.id,
+        templateName: template.name,
+        templateItems: template.templateItems.map(item => ({
+          itemId: item.id,
+          category: item.category,
+          subCategory: item.subCategory,
+          description: item.description,
+          displayOrder: item.displayOrder
+        }))
+      });
+    } catch (error) {
+      console.error('Error fetching checklist:', error);
+      res.status(500).json({ message: "Failed to fetch checklist" });
+    }
+  });
+
+  // Submit a new TBM report
+  app.post("/api/tbm/reports", async (req, res) => {
+    try {
+      const { teamId, reportDate, managerName, remarks, results, signatures } = req.body;
+
+      if (!teamId || !reportDate || !results || !signatures) {
+        return res.status(400).json({ message: "Invalid submission data" });
+      }
+
+      const report = await prisma.dailyReport.create({
+        data: {
+          teamId,
+          reportDate: new Date(reportDate),
+          managerName,
+          remarks,
+          reportDetails: {
+            create: Object.entries(results).map(([itemId, checkState]) => ({
+              itemId: parseInt(itemId),
+              checkState: checkState as string
+            }))
+          },
+          reportSignatures: {
+            create: signatures.map((sig: any) => ({
+              userId: sig.userId,
+              signatureImage: sig.signatureImage,
+              signedAt: new Date()
+            }))
+          }
+        },
+        include: {
+          reportDetails: true,
+          reportSignatures: true
+        }
+      });
+
+      res.status(201).json(report);
+    } catch (error) {
+      console.error('Error creating report:', error);
+      res.status(500).json({ message: "Failed to create report" });
+    }
+  });
+
+  // Get TBM reports with filters (including date range)
+  app.get("/api/tbm/reports", async (req, res) => {
+    try {
+      const { date, teamId, startDate, endDate } = req.query;
+      
+      let where: any = {};
+
+      // 기간별 조회 (startDate와 endDate 우선)
+      if (startDate && endDate) {
+        where.reportDate = {
+          gte: new Date(startDate as string),
+          lte: new Date(endDate as string)
+        };
+      } else if (date) {
+        // 단일 날짜 조회
+        const targetDate = new Date(date as string);
+        where.reportDate = {
+          gte: new Date(targetDate.setHours(0, 0, 0, 0)),
+          lte: new Date(targetDate.setHours(23, 59, 59, 999))
+        };
+      }
+
+      if (teamId) {
+        where.teamId = parseInt(teamId as string);
+      }
+
+      const reports = await prisma.dailyReport.findMany({
+        where,
+        include: {
+          team: true,
+          reportDetails: {
+            include: {
+              item: true
+            }
+          },
+          reportSignatures: {
+            include: {
+              user: true
+            }
+          }
+        },
+        orderBy: { reportDate: 'desc' }
+      });
+
+      res.json(reports);
+    } catch (error) {
+      console.error('Error fetching reports:', error);
+      res.status(500).json({ message: "Failed to fetch reports" });
+    }
+  });
+
+  // Get a specific TBM report
+  app.get("/api/tbm/reports/:id", async (req, res) => {
+    try {
+      const reportId = parseInt(req.params.id);
+      const report = await prisma.dailyReport.findUnique({
+        where: { id: reportId },
+        include: {
+          team: true,
+          reportDetails: {
+            include: {
+              item: true
+            }
+          },
+          reportSignatures: {
+            include: {
+              user: true
+            }
+          }
+        }
+      });
+
+      if (!report) {
+        return res.status(404).json({ message: "Report not found" });
+      }
+
+      res.json(report);
+    } catch (error) {
+      console.error('Error fetching report:', error);
+      res.status(500).json({ message: "Failed to fetch report" });
+    }
+  });
+
+  // Update a TBM report
+  app.put("/api/tbm/reports/:id", async (req, res) => {
+    try {
+      const reportId = parseInt(req.params.id);
+      const { reportDate, managerName, remarks, results } = req.body;
+
+      // Delete existing report details
+      await prisma.reportDetail.deleteMany({
+        where: { reportId }
+      });
+
+      // Update report with new details
+      const updatedReport = await prisma.dailyReport.update({
+        where: { id: reportId },
+        data: {
+          reportDate: reportDate ? new Date(reportDate) : undefined,
+          managerName,
+          remarks,
+          reportDetails: {
+            create: results ? Object.entries(results).map(([itemId, checkState]) => ({
+              itemId: parseInt(itemId),
+              checkState: checkState as string
+            })) : []
+          }
+        },
+        include: {
+          reportDetails: true,
+          reportSignatures: true
+        }
+      });
+
+      res.json(updatedReport);
+    } catch (error) {
+      console.error('Error updating report:', error);
+      res.status(500).json({ message: "Failed to update report" });
+    }
+  });
+
+  // Delete a TBM report
+  app.delete("/api/tbm/reports/:id", async (req, res) => {
+    try {
+      const reportId = parseInt(req.params.id);
+      
+      await prisma.dailyReport.delete({
+        where: { id: reportId }
+      });
+
+      res.json({ message: "Report deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      res.status(500).json({ message: "Failed to delete report" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

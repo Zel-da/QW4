@@ -152,16 +152,16 @@ export default function HomePage() {
                   </div>
                   
                   {/* 모바일 카드 뷰 */}
-                  <div className="md:hidden space-y-3">
+                  <div className="md:hidden space-y-4">
                     {notices.map((notice, index) => (
                       <Link key={notice.id} href={`/notices/${notice.id}`}>
-                        <Card className="hover:bg-accent transition-colors cursor-pointer">
-                          <CardContent className="p-4">
+                        <Card className="hover:bg-accent transition-colors cursor-pointer active:scale-98">
+                          <CardContent className="p-5">
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex-1">
-                                <div className="text-sm text-muted-foreground mb-1">#{notices.length - index}</div>
-                                <h3 className="text-lg font-semibold leading-tight mb-2">{notice.title}</h3>
-                                <div className="text-sm text-muted-foreground">
+                                <div className="text-base text-muted-foreground mb-2">#{notices.length - index}</div>
+                                <h3 className="text-xl font-bold leading-tight mb-3">{notice.title}</h3>
+                                <div className="text-base text-muted-foreground">
                                   {new Date(notice.createdAt).toLocaleDateString()}
                                 </div>
                               </div>
@@ -276,16 +276,16 @@ export default function HomePage() {
                 </div>
                 
                 {/* 모바일 카드 뷰 */}
-                <div className="md:hidden space-y-3">
+                <div className="md:hidden space-y-4">
                   {notices.map((notice, index) => (
                     <Link key={notice.id} href={`/notices/${notice.id}`}>
-                      <Card className="hover:bg-accent transition-colors cursor-pointer">
-                        <CardContent className="p-4">
+                      <Card className="hover:bg-accent transition-colors cursor-pointer active:scale-98">
+                        <CardContent className="p-5">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1">
-                              <div className="text-sm text-muted-foreground mb-1">#{notices.length - index}</div>
-                              <h3 className="text-lg font-semibold leading-tight mb-2">{notice.title}</h3>
-                              <div className="text-sm text-muted-foreground">
+                              <div className="text-base text-muted-foreground mb-2">#{notices.length - index}</div>
+                              <h3 className="text-xl font-bold leading-tight mb-3">{notice.title}</h3>
+                              <div className="text-base text-muted-foreground">
                                 {new Date(notice.createdAt).toLocaleDateString()}
                               </div>
                             </div>

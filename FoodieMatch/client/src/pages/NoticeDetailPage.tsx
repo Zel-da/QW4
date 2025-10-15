@@ -39,18 +39,18 @@ export default function NoticeDetailPage() {
       <Header />
       <main className="container mx-auto p-4 lg:p-6">
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <Button asChild variant="outline" className="text-base h-11 min-w-[120px]">
+          <Button asChild variant="outline" className="text-lg h-14 sm:h-12 min-w-[140px]">
             <Link href="/">
               <ArrowLeft className="w-5 h-5 mr-2" />
               목록으로
             </Link>
           </Button>
           {user?.role === 'admin' && notice && (
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button asChild variant="secondary" className="text-base h-11 flex-1 sm:flex-none min-w-[80px]">
+            <div className="flex gap-3 w-full sm:w-auto">
+              <Button asChild variant="secondary" className="text-lg h-14 sm:h-12 flex-1 sm:flex-none min-w-[100px]">
                 <Link href={`/notices/edit/${notice.id}`}>수정</Link>
               </Button>
-              <Button onClick={handleDelete} variant="destructive" className="text-base h-11 flex-1 sm:flex-none min-w-[80px]">
+              <Button onClick={handleDelete} variant="destructive" className="text-lg h-14 sm:h-12 flex-1 sm:flex-none min-w-[100px]">
                 삭제
               </Button>
             </div>
@@ -70,10 +70,10 @@ export default function NoticeDetailPage() {
             </CardHeader>
             <CardContent className="mt-6">
               {notice.imageUrl && <img src={notice.imageUrl} alt={notice.title} className="max-w-full rounded-md mb-6" />}
-              <div className="text-lg md:text-xl leading-relaxed whitespace-pre-wrap">{notice.content}</div>
+              <div className="text-xl md:text-2xl leading-relaxed whitespace-pre-wrap">{notice.content}</div>
               {notice.attachmentUrl && (
                 <div className="mt-8">
-                  <Button asChild variant="outline" className="text-base h-12 w-full sm:w-auto min-w-[200px]">
+                  <Button asChild variant="outline" className="text-lg h-14 w-full sm:w-auto min-w-[220px]">
                     <a href={notice.attachmentUrl} download={notice.attachmentName || true}>
                       📎 첨부파일 다운로드: {notice.attachmentName}
                     </a>

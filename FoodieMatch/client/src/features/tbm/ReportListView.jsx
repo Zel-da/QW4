@@ -8,25 +8,29 @@ import { Label } from '../../components/ui/label';
 const ReportListView = ({ onSelectReport }) => {
     const [reports, setReports] = useState([]);
     const [teams, setTeams] = useState([]);
-    const [filters, setFilters] = useState({ date: new Date().toISOString().slice(0, 10), teamId: '' });
+    const [filters, setFilters] = useState({ 
+        startDate: new Date().toISOString().slice(0, 10), 
+        endDate: new Date().toISOString().slice(0, 10), 
+        teamId: '' 
+    });
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        apiClient.get('/api/teams')
+        apiClient.get('/api/tbm/teams')
             .then(response => setTeams(response.data))
             .catch(error => console.error("Error fetching teams:", error));
     }, []);
 
     const fetchReports = useCallback(() => {
         setLoading(true);
-        apiClient.get('/api/reports', { params: filters })
+        apiClient.get('/api/tbm/reports', { params: filters })
             .then(response => setReports(response.data))
             .catch(error => console.error("Error fetching reports:", error))
             .finally(() => setLoading(false));
     }, [filters]);
 
     useEffect(() => {
-        if (filters.date) {
+        if (filters.startDate && filters.endDate) {
             fetchReports();
         } else {
             setReports([]);
@@ -41,14 +45,25 @@ const ReportListView = ({ onSelectReport }) => {
     return (
         <div className="space-y-6">
             <h2 className="text-3xl font-bold tracking-tight">제출된 점검표 목록</h2>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2">
-                    <Label htmlFor="date">날짜:</Label>
+                    <Label htmlFor="startDate">시작일:</Label>
                     <Input
-                        id="date"
+                        id="startDate"
                         type="date"
-                        name="date"
-                        value={filters.date}
+                        name="startDate"
+                        value={filters.startDate}
+                        onChange={handleFilterChange}
+                        className="w-48"
+                    />
+                </div>
+                <div className="flex items-center gap-2">
+                    <Label htmlFor="endDate">종료일:</Label>
+                    <Input
+                        id="endDate"
+                        type="date"
+                        name="endDate"
+                        value={filters.endDate}
                         onChange={handleFilterChange}
                         className="w-48"
                     />
@@ -91,7 +106,7 @@ const ReportListView = ({ onSelectReport }) => {
                         </Card>
                     )) : (
                         <div className="col-span-full text-center text-muted-foreground py-10">
-                            <p>선택한 날짜에 해당하는 점검표가 없습니다.</p>
+                            <p>선택한 기간에 해당하는 점검표가 없습니다.</p>
                         </div>
                     )}
                 </div>

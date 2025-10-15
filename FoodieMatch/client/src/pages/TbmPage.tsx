@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
+// @ts-ignore
 import TBMChecklist from '../features/tbm/TBMChecklist.jsx';
+// @ts-ignore
 import ReportListView from '../features/tbm/ReportListView.jsx';
+// @ts-ignore
 import ReportDetailView from '../features/tbm/ReportDetailView.jsx';
 import { Button } from '../components/ui/button';
 import { Header } from '@/components/header';

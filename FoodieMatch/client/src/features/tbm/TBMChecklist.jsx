@@ -32,7 +32,7 @@ const TBMChecklist = ({ reportIdForEdit, onFinishEditing }) => {
     }
 
     useEffect(() => {
-        apiClient.get('/api/teams')
+        apiClient.get('/api/tbm/teams')
             .then(response => {
                 setTeams(response.data);
                 if (!isEditMode && response.data.length > 0) {
@@ -45,7 +45,7 @@ const TBMChecklist = ({ reportIdForEdit, onFinishEditing }) => {
     useEffect(() => {
         if (isEditMode) {
             setLoading(true);
-            apiClient.get(`/api/reports/${reportIdForEdit}`)
+            apiClient.get(`/api/tbm/reports/${reportIdForEdit}`)
                 .then(response => {
                     const report = response.data;
                     setSelectedTeam(report.teamId.toString());
@@ -55,7 +55,7 @@ const TBMChecklist = ({ reportIdForEdit, onFinishEditing }) => {
                     setCheckResults(loadedResults);
                     const loadedSignatures = {};
                     report.reportSignatures.forEach(sig => {
-                        if(sig.user) { loadedSignatures[sig.userId] = `data:image/png;base64,${sig.signatureImage}`; }
+                        if(sig.user) { loadedSignatures[sig.userId] = sig.signatureImage; }
                     });
                     setSignatures(loadedSignatures);
                 })
@@ -68,8 +68,8 @@ const TBMChecklist = ({ reportIdForEdit, onFinishEditing }) => {
         if (!selectedTeam) return;
         setLoading(true);
         if(!isEditMode) resetState();
-        const fetchChecklist = apiClient.get(`/api/teams/${selectedTeam}/template`);
-        const fetchUsers = apiClient.get(`/api/teams/${selectedTeam}/users`);
+        const fetchChecklist = apiClient.get(`/api/tbm/checklist/${selectedTeam}`);
+        const fetchUsers = apiClient.get(`/api/tbm/teams/${selectedTeam}/users`);
         Promise.all([fetchChecklist, fetchUsers])
             .then(([checklistRes, usersRes]) => {
                 setChecklistData(checklistRes.data);
@@ -99,11 +99,11 @@ const TBMChecklist = ({ reportIdForEdit, onFinishEditing }) => {
         setIsSubmitting(true);
         try {
             if (isEditMode) {
-                await apiClient.put(`/api/reports/${reportIdForEdit}`, submissionData);
+                await apiClient.put(`/api/tbm/reports/${reportIdForEdit}`, submissionData);
                 alert("점검표가 성공적으로 수정되었습니다.");
                 onFinishEditing();
             } else {
-                await apiClient.post('/api/reports', submissionData);
+                await apiClient.post('/api/tbm/reports', submissionData);
                 alert(`${teams.find(t => t.id === parseInt(selectedTeam)).name} 점검표가 성공적으로 제출되었습니다.`);
                 resetState();
             }

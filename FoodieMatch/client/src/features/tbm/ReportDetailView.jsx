@@ -13,7 +13,7 @@ const ReportDetailView = ({ reportId, onBackToList, onModify }) => {
         if (!reportId) return;
 
         setLoading(true);
-        apiClient.get(`/api/reports/${reportId}`)
+        apiClient.get(`/api/tbm/reports/${reportId}`)
             .then(response => setReport(response.data))
             .catch(error => console.error(`Error fetching report ${reportId}:`, error))
             .finally(() => setLoading(false));
@@ -22,7 +22,7 @@ const ReportDetailView = ({ reportId, onBackToList, onModify }) => {
     const handleDelete = async () => {
         if (window.confirm(`정말로 이 점검표(ID: ${reportId})를 삭제하시겠습니까?`)) {
             try {
-                await apiClient.delete(`/api/reports/${reportId}`);
+                await apiClient.delete(`/api/tbm/reports/${reportId}`);
                 alert("점검표가 성공적으로 삭제되었습니다.");
                 onBackToList();
             } catch (error) {
@@ -116,7 +116,7 @@ const ReportDetailView = ({ reportId, onBackToList, onModify }) => {
                                         <CardTitle className="text-base">{sig.user?.name || '관리자'}</CardTitle>
                                     </CardHeader>
                                     <CardContent className="p-4 pt-0">
-                                        <img src={`data:image/png;base64,${sig.signatureImage}`} alt={`signature of ${sig.user?.name}`} className="mx-auto border bg-white" />
+                                        <img src={sig.signatureImage.startsWith('data:') ? sig.signatureImage : `data:image/png;base64,${sig.signatureImage}`} alt={`signature of ${sig.user?.name}`} className="mx-auto border bg-white" />
                                     </CardContent>
                                     <CardFooter className="p-4 text-xs text-muted-foreground">
                                         {new Date(sig.signedAt).toLocaleString()}
